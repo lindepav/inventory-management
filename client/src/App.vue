@@ -58,7 +58,8 @@
 </template>
 
 <script>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import { api } from './api'
 import { useAuth } from './composables/useAuth'
 import { useI18n } from './composables/useI18n'
@@ -83,6 +84,16 @@ export default {
     const showProfileDetails = ref(false)
     const showTasks = ref(false)
     const apiTasks = ref([])
+    const route = useRoute()
+
+    // The tab strip scrolls on narrow screens; keep the active tab visible
+    const revealActiveTab = () => {
+      nextTick(() => {
+        document.querySelector('.nav-tabs a.active')?.scrollIntoView({ inline: 'nearest', block: 'nearest' })
+      })
+    }
+    watch(() => route.path, revealActiveTab)
+    onMounted(revealActiveTab)
 
     // Merge mock tasks from currentUser with API tasks
     const tasks = computed(() => {
@@ -236,10 +247,42 @@ body {
 .nav-tabs {
   display: flex;
   gap: 0.25rem;
+  min-width: 0;
+  /* Scroll inside the strip instead of overlapping the language/profile controls */
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.nav-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+/* Seven tabs no longer fit beside the subtitle on smaller screens */
+@media (max-width: 1400px) {
+  .subtitle {
+    display: none;
+  }
+}
+
+@media (max-width: 1200px) {
+  .nav-container {
+    padding: 0 1rem;
+  }
+
+  .nav-container > .nav-tabs {
+    margin-right: 0.5rem;
+  }
+
+  .nav-tabs a {
+    padding: 0.5rem 0.5rem;
+    font-size: 0.875rem;
+  }
 }
 
 .nav-tabs a {
-  padding: 0.625rem 1.25rem;
+  padding: 0.625rem 0.875rem;
+  white-space: nowrap;
   color: #64748b;
   text-decoration: none;
   font-weight: 500;
